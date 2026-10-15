@@ -72,6 +72,11 @@ async function getOwnedBudget(userId: string, budgetId: string): Promise<BudgetR
   return row
 }
 
+export async function getBudget(userId: string, budgetId: string): Promise<BudgetDTO> {
+  const row = await getOwnedBudget(userId, budgetId)
+  return serializeBudget(userId, row, new Date())
+}
+
 /** Actual spend per category inside the budget's window (PRD §30). */
 async function spentByCategory(
   userId: string,

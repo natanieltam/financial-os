@@ -113,5 +113,11 @@ export async function flowSeries(
 
 /** PostgreSQL unique-violation code (PRD §22 replay handling). */
 export function isUniqueViolation(err: unknown): boolean {
-  return (err as { code?: string } | null)?.code === '23505'
+  // DrizzleQueryError wraps the original pg error in `cause`; unwrap a few levels.
+  let current = err as { code?: string; cause?: unknown } | null | undefined
+  for (let depth = 0; current && depth < 3; depth++) {
+    if (current.code === '23505') return true
+    current = current.cause as typeof current
+  }
+  return false
 }

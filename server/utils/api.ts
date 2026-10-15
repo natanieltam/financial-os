@@ -24,6 +24,14 @@ export class ApiError extends Error {
   }
 }
 
+
+/** Validates a :id route param as a UUID before it touches the database (404 otherwise). */
+export function requireUuidParam(raw: string | undefined): string {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  if (!raw || !uuid.test(raw)) throw apiErrors.notFound()
+  return raw
+}
+
 export const apiErrors = {
   unauthorized: (message = 'Authentication required') => new ApiError(401, 'UNAUTHORIZED', message),
   forbidden: (message = 'You do not have access to this resource') =>

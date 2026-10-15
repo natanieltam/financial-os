@@ -24,7 +24,10 @@ export function normalizeMoney(input: string | number): string {
   if (!MONEY_PATTERN.test(raw)) {
     throw new MoneyError('Amount must be a decimal number with at most 2 decimal places')
   }
-  return raw
+  // Canonical fixed-2dp representation.
+  const negative = raw.startsWith('-')
+  const [intPart, fracPart = ''] = (negative ? raw.slice(1) : raw).split('.')
+  return `${negative ? '-' : ''}${intPart}.${fracPart.padEnd(2, '0')}`
 }
 
 /** True when the amount is a valid money string strictly greater than zero. */
@@ -37,6 +40,7 @@ export function isPositiveMoney(input: string | number): boolean {
 }
 
 export function moneyToCents(money: string): bigint {
+  money = normalizeMoney(money) // validates and canonicalises; throws MoneyError
   const negative = money.startsWith('-')
   const body = negative ? money.slice(1) : money
   const [intPart = '0', fracPart = '0'] = body.split('.')

@@ -78,7 +78,7 @@ export async function incomeExpenseSeries(
 ): Promise<SeriesPoint[]> {
   const rows = await getDatabase()
     .select({
-      bucket: sql<string>`to_char(date_trunc(${granularity}, ${transactions.transactionDate}), ${granularity === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM'})`,
+      bucket: sql<string>`to_char(date_trunc(${granularity}, ${transactions.transactionDate}), ${granularity === 'day' ? 'YYYY-MM-DD' : 'YYYY-MM'}) as "bucket"`,
       income: sql<string>`coalesce(sum(case when ${transactions.type} = 'income' then ${transactions.amount} else 0 end), 0)::numeric`,
       expense: sql<string>`coalesce(sum(case when ${transactions.type} = 'expense' then ${transactions.amount} else 0 end), 0)::numeric`,
     })

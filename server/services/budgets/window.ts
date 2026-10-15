@@ -100,6 +100,6 @@ export function budgetItemStatus(
 /** 0–100+ percent (2 decimals) of spent against budget, precise on BigInts. */
 export function budgetPercent(spentCents: bigint, amountCents: bigint): number {
   if (amountCents <= 0n) return spentCents > 0n ? 100 : 0
-  const scaled = (spentCents * 10_000n) / amountCents
+  const scaled = (spentCents * 10_000n + amountCents / 2n) / amountCents // round-half-up, exact BigInt
   return Number(scaled) / 100
 }

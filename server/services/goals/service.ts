@@ -61,6 +61,10 @@ async function getOwnedGoal(userId: string, goalId: string): Promise<GoalRow> {
   return row
 }
 
+export async function getGoal(userId: string, goalId: string): Promise<GoalDTO> {
+  return toDTO(await getOwnedGoal(userId, goalId))
+}
+
 /** Auto-complete when the target is reached (PRD §30). */
 function resolveStatus(row: { targetAmount: string; currentAmount: string; status: string }): string {
   if (row.status === 'archived') return 'archived'
