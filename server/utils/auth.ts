@@ -6,7 +6,6 @@ import { getDatabase } from '../../db/client'
 import { sessions, users } from '../../db/schema/index'
 import { apiErrors } from './api'
 
-export { fakeVerify, hashPassword, verifyPassword } from './password'
 
 export const SESSION_COOKIE = 'finos_session'
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 30 // 30 days

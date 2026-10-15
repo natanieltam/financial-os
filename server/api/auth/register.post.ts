@@ -5,7 +5,8 @@ import { getDatabase } from '../../../db/client'
 import { users } from '../../../db/schema/index'
 import { apiErrors, apiHandler } from '../../utils/api'
 import { audit } from '../../utils/audit'
-import { createSession, hashPassword, type AuthUser } from '../../utils/auth'
+import { createSession, type AuthUser } from '../../utils/auth'
+import { hashPassword } from '../../utils/password'
 import { rateLimit } from '../../utils/rateLimit'
 
 const registerSchema = z.object({

@@ -23,6 +23,7 @@
     "@node-rs/argon2": "^2.2.2",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.4",
+    "echarts": "^6.1.0",
     "h3": "^1.15.11",
     "lucide-vue-next": "^1.0.0",
     "nuxt": "^4.6.1",

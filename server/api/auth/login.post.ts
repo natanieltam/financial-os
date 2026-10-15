@@ -5,7 +5,8 @@ import { getDatabase } from '../../../db/client'
 import { users } from '../../../db/schema/index'
 import { apiErrors, apiHandler } from '../../utils/api'
 import { audit } from '../../utils/audit'
-import { createSession, fakeVerify, verifyPassword, type AuthUser } from '../../utils/auth'
+import { createSession, type AuthUser } from '../../utils/auth'
+import { fakeVerify, verifyPassword } from '../../utils/password'
 import { rateLimit, resetRateLimit } from '../../utils/rateLimit'
 
 const loginSchema = z.object({

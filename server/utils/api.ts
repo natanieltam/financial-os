@@ -33,6 +33,7 @@ export const apiErrors = {
   rateLimited: (message = 'Too many requests. Please try again later.') =>
     new ApiError(429, 'RATE_LIMITED', message),
   validation: (message = 'Invalid request') => new ApiError(400, 'VALIDATION_ERROR', message),
+  internal: () => new ApiError(500, 'INTERNAL_ERROR', 'Something went wrong'),
 }
 
 export interface ApiSuccess<T> {
@@ -61,9 +62,12 @@ export function apiHandler<T>(handler: (event: H3Event) => Promise<T> | T) {
       }
       if (err instanceof ZodError) {
         setResponseStatus(event, 400)
+        // Safe authored validation text only — never internals (PRD §54, §56).
+        const first = err.issues[0]
+        const message = first ? `${first.path.join('.') || 'input'}: ${first.message}` : 'Invalid request'
         return {
           success: false,
-          error: { code: 'VALIDATION_ERROR', message: 'Invalid request' },
+          error: { code: 'VALIDATION_ERROR', message },
         }
       }
       // Client-side HTTP errors raised by h3 itself (e.g. malformed JSON body).
