@@ -26,6 +26,7 @@ npm run dev        # http://localhost:3000
 ```bash
 npm run typecheck
 npm run lint
+npm test        # integration tests (requires `npm run build` first)
 npm run build
 ```
 

@@ -1,0 +1,44 @@
+import { getRequestIP, type H3Event } from 'h3'
+import { apiErrors } from './api'
+
+interface Bucket {
+  count: number
+  resetAt: number
+}
+
+/** In-memory sliding-window limiter (single-process; PRD §61). */
+const buckets = new Map<string, Bucket>()
+
+export function clientIp(event: H3Event): string {
+  try {
+    return getRequestIP(event, { xForwardedFor: false }) ?? 'unknown'
+  } catch {
+    return 'unknown'
+  }
+}
+
+function rateLimitKey(bucket: string, event: H3Event): string {
+  return `${bucket}|${clientIp(event)}`
+}
+
+export function rateLimit(event: H3Event, bucket: string, limit: number, windowMs: number): void {
+  const key = rateLimitKey(bucket, event)
+  const now = Date.now()
+  const entry = buckets.get(key)
+  if (!entry || entry.resetAt <= now) {
+    buckets.set(key, { count: 1, resetAt: now + windowMs })
+    if (buckets.size > 5000) {
+      for (const [k, v] of buckets) if (v.resetAt <= now) buckets.delete(k)
+    }
+    return
+  }
+  entry.count += 1
+  if (entry.count > limit) {
+    const retryAfter = Math.max(1, Math.ceil((entry.resetAt - now) / 1000))
+    throw apiErrors.rateLimited(`Too many requests. Please try again in ${retryAfter} seconds.`)
+  }
+}
+
+export function resetRateLimit(event: H3Event, bucket: string): void {
+  buckets.delete(rateLimitKey(bucket, event))
+}
