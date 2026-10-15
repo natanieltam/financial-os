@@ -34,7 +34,8 @@ Browser → Nuxt (app/) → Server API (server/) → Services → Domain Logic �
 
 ## Status
 
-- Phase 1 (this): framework foundation only — Nuxt 4 + TypeScript + Tailwind + lint/format + layout skeleton.
-- Not yet implemented: database, authentication, financial features, AI layer, tests.
+- Phase 1: framework foundation — Nuxt 4 + TypeScript + Tailwind + lint/format + layout skeleton.
+- Phase 2 (current): PostgreSQL database schema + Drizzle migrations (see `docs/DATABASE.md`).
+- Not yet implemented: API, authentication, financial features, AI layer, tests.
 
 Each phase updates this document to match what actually exists.
