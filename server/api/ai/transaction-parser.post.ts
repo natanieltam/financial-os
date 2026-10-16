@@ -1,7 +1,7 @@
 import { readBody } from 'h3'
 import { apiHandler } from '../../utils/api'
 import { requireUser } from '../../utils/auth'
-import { rateLimit } from '../../utils/rateLimit'
+import { rateLimitUser } from '../../utils/rateLimit'
 import { aiParseRequestSchema } from '../../../shared/schemas/finance'
 import { parseTransactionNote } from '../../services/ai/transactionParser'
 
@@ -12,7 +12,7 @@ import { parseTransactionNote } from '../../services/ai/transactionParser'
  */
 export default apiHandler(async (event) => {
   const auth = requireUser(event)
-  rateLimit(event, 'ai:parse', 10, 60_000)
+  rateLimitUser(event, auth.user.id, 'ai:parse', 10, 60_000)
   const { text } = aiParseRequestSchema.parse(await readBody(event))
   const result = await parseTransactionNote(event, auth.user.id, text)
   return result

@@ -22,7 +22,20 @@ function rateLimitKey(bucket: string, event: H3Event): string {
 }
 
 export function rateLimit(event: H3Event, bucket: string, limit: number, windowMs: number): void {
-  const key = rateLimitKey(bucket, event)
+  enforce(bucket, clientIp(event), limit, windowMs)
+}
+
+/**
+ * Per-user limiter for authenticated endpoints (PRD §61). Keys on the stable
+ * session user id, not the client IP, so a shared NAT/office IP (or parallel
+ * test workers) never starves unrelated users. Runs after requireUser.
+ */
+export function rateLimitUser(event: H3Event, userId: string, bucket: string, limit: number, windowMs: number): void {
+  enforce(bucket, `user:${userId}`, limit, windowMs)
+}
+
+function enforce(bucket: string, subject: string, limit: number, windowMs: number): void {
+  const key = `${bucket}|${subject}`
   const now = Date.now()
   const entry = buckets.get(key)
   if (!entry || entry.resetAt <= now) {

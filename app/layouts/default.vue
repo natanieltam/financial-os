@@ -19,6 +19,7 @@ const nav = [
   { to: '/goals', label: 'Goals' },
   { to: '/health', label: 'Health' },
   { to: '/reports', label: 'Reports' },
+  { to: '/settings', label: 'Settings' },
 ]
 
 const initials = computed(() => {
