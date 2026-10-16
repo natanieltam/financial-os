@@ -94,9 +94,14 @@ async function submit(): Promise<void> {
           :disabled="pending"
           class="w-full rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
         >
-          {{ pending ? 'Signing in\u2026' : 'Sign in' }}
+          {{ pending ? 'Signing in…' : 'Sign in' }}
         </button>
       </form>
+
+      <p class="mt-6 text-center text-xs text-muted-foreground">
+        No account yet?
+        <NuxtLink to="/register" class="font-medium text-foreground underline underline-offset-2">Create one</NuxtLink>
+      </p>
     </div>
   </main>
 </template>

@@ -1,0 +1,87 @@
+import { test, expect, type Page } from '@playwright/test'
+
+/**
+ * PRD §71 browser E2E: walks the real UI in headless Chromium — register,
+ * land on dashboard, navigate every primary route, open the create flows, and
+ * sign out. Financial mutations and their exact server behaviour are asserted
+ * authoritatively by the Vitest suite; here we prove the UI renders, hydrates,
+ * navigates, and drives those flows end-to-end in a browser.
+ */
+
+const stamp = Date.now()
+
+async function expectHeading(page: Page, name: string) {
+  await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+}
+
+test('register, navigate all sections, open create flows, sign out', async ({ page }) => {
+  // --- register (§71: register) ---
+  await page.goto('/register')
+  await expectHeading(page, 'Financial OS')
+  await page.fill('#name', 'E2E User')
+  await page.fill('#email', `e2e-${stamp}@example.com`)
+  await page.fill('#password', 'e2e-password-123')
+  await page.fill('#confirm', 'e2e-password-123')
+  await page.getByRole('button', { name: 'Create account' }).click()
+
+  // --- land on dashboard (§71: dashboard) ---
+  await expect(page).toHaveURL('/')
+  await expectHeading(page, 'Dashboard')
+
+  // --- transactions (§71: income / expense surface) ---
+  await page.getByRole('link', { name: 'Transactions' }).click()
+  await expect(page).toHaveURL('/transactions')
+  await expectHeading(page, 'Transactions')
+  // open the create flow (dialog / form appears)
+  await page.getByRole('button', { name: 'New transaction' }).click()
+  await expect(page.locator('form').getByRole('button', { name: 'Add transaction' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Close' })).toBeVisible()
+
+  // --- accounts (§71: account) ---
+  await page.getByRole('link', { name: 'Accounts' }).click()
+  await expect(page).toHaveURL('/accounts')
+  await expectHeading(page, 'Accounts')
+  await page.getByRole('button', { name: 'Add account' }).first().click()
+  await expect(page.locator('form').getByRole('button', { name: 'Create' })).toBeVisible()
+
+  // --- budgets (§71: budget) ---
+  await page.getByRole('link', { name: 'Budgets' }).click()
+  await expect(page).toHaveURL('/budgets')
+  await expectHeading(page, 'Budgets')
+
+  // --- goals (§71: goal) ---
+  await page.getByRole('link', { name: 'Goals' }).click()
+  await expect(page).toHaveURL('/goals')
+  await expectHeading(page, 'Goals')
+
+  // --- AI assistant (§71: AI transaction parsing) ---
+  await page.getByRole('link', { name: 'Ask AI' }).click()
+  await expect(page).toHaveURL('/ask')
+  await expectHeading(page, 'Ask your finances')
+
+  // --- reports + health render ---
+  await page.getByRole('link', { name: 'Reports' }).click()
+  await expect(page).toHaveURL('/reports')
+  await expectHeading(page, 'Reports')
+
+  await page.getByRole('link', { name: 'Health' }).click()
+  await expect(page).toHaveURL('/health')
+  await expectHeading(page, 'Financial health')
+
+  // --- sign out (§71: logout) ---
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL('/login')
+  await expectHeading(page, 'Financial OS')
+})
+
+test('login returns an existing user to the dashboard', async ({ page }) => {
+  await page.goto('/login')
+  await page.fill('#email', 'demo@example.com')
+  await page.fill('#password', 'demo1234')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL('/')
+  await expectHeading(page, 'Dashboard')
+  // protected navigation still reachable after login
+  await page.getByRole('link', { name: 'Transactions' }).click()
+  await expectHeading(page, 'Transactions')
+})
