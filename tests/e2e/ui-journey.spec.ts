@@ -74,10 +74,21 @@ test('register, navigate all sections, open create flows, sign out', async ({ pa
   await expectHeading(page, 'Financial OS')
 })
 
-test('login returns an existing user to the dashboard', async ({ page }) => {
-  await page.goto('/login')
-  await page.fill('#email', 'demo@example.com')
-  await page.fill('#password', 'demo1234')
+test('an existing user can sign back in and reach the dashboard', async ({ page }) => {
+  const email = `e2e-login-${Date.now()}@example.com`
+  // create the account first (register opens a session server-side)
+  await page.goto('/register')
+  await page.fill('#name', 'Login User')
+  await page.fill('#email', email)
+  await page.fill('#password', 'e2e-login-pass-123')
+  await page.fill('#confirm', 'e2e-login-pass-123')
+  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page).toHaveURL('/')
+  // sign out, then sign back in with the same credentials
+  await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL('/login')
+  await page.fill('#email', email)
+  await page.fill('#password', 'e2e-login-pass-123')
   await page.getByRole('button', { name: 'Sign in' }).click()
   await expect(page).toHaveURL('/')
   await expectHeading(page, 'Dashboard')
