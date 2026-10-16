@@ -16,7 +16,7 @@ const registerSchema = z.object({
 })
 
 export default apiHandler(async (event) => {
-  rateLimit(event, 'register', 10, 60_000)
+  rateLimit(event, 'register', 30, 60_000)
 
   const body = registerSchema.parse(await readBody(event))
   const email = body.email.toLowerCase()

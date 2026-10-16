@@ -117,6 +117,8 @@ async function remove(tx: TransactionDTO): Promise<void> {
       @cancelled="showForm = false; editing = null"
     />
 
+    <AiNlParser :accounts="accounts" :categories="categories" @saved="load" />
+
     <!-- Filters -->
     <div class="grid gap-2 rounded-xl border border-border bg-card p-3 text-sm sm:grid-cols-3 lg:grid-cols-6">
       <select v-model="filters.type" class="rounded-md border border-border bg-background px-2.5 py-1.5 text-sm">

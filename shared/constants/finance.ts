@@ -28,6 +28,20 @@ export type BudgetStatus = (typeof BUDGET_STATUSES)[number]
 export const GOAL_STATUSES = ['active', 'completed', 'archived'] as const
 export type GoalStatus = (typeof GOAL_STATUSES)[number]
 
+/* PRD §32 — recurring transactions */
+export const RECURRING_FREQUENCIES = ['daily', 'weekly', 'monthly', 'yearly'] as const
+export type RecurringFrequency = (typeof RECURRING_FREQUENCIES)[number]
+
+/* PRD §33 — bills */
+export const BILL_STATUSES = ['upcoming', 'due_soon', 'overdue', 'paid'] as const
+export type BillStatus = (typeof BILL_STATUSES)[number]
+/** A bill counts as due soon within this many days of its due date. */
+export const BILL_DUE_SOON_DAYS = 3
+
+/* PRD §36 — cashflow forecast horizons */
+export const FORECAST_HORIZONS = [30, 60, 90] as const
+export type ForecastHorizon = (typeof FORECAST_HORIZONS)[number]
+
 export const ACCOUNT_TYPE_LABELS: Record<AccountType, string> = {
   cash: 'Cash',
   bank: 'Bank',

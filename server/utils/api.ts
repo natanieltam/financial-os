@@ -41,6 +41,8 @@ export const apiErrors = {
   rateLimited: (message = 'Too many requests. Please try again later.') =>
     new ApiError(429, 'RATE_LIMITED', message),
   validation: (message = 'Invalid request') => new ApiError(400, 'VALIDATION_ERROR', message),
+  aiUnavailable: (message = 'AI is temporarily unavailable. Everything else keeps working.') =>
+    new ApiError(503, 'AI_UNAVAILABLE', message),
   internal: () => new ApiError(500, 'INTERNAL_ERROR', 'Something went wrong'),
 }
 

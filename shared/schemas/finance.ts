@@ -3,9 +3,12 @@ import { moneyToCents, normalizeMoney } from '../money'
 import {
   ACCOUNT_STATUSES,
   ACCOUNT_TYPES,
+  BILL_STATUSES,
   BUDGET_PERIODS,
+  FORECAST_HORIZONS,
   GOAL_STATUSES,
   MONEY_FLOW_TYPES,
+  RECURRING_FREQUENCIES,
   TRANSACTION_TYPES,
 } from '../constants/finance'
 
@@ -230,3 +233,83 @@ export const listQuerySchema = z.object({
   flow: z.enum(MONEY_FLOW_TYPES).optional(),
   search: z.string().trim().max(60).optional(),
 })
+
+/* ------------------------------ recurring (PRD §32) ------------------------------ */
+
+export const recurringCreateSchema = z.object({
+  type: z.enum(MONEY_FLOW_TYPES),
+  accountId: idSchema,
+  categoryId: idSchema.nullable().optional(),
+  amount: moneyField({ positive: true }),
+  description: z.string().trim().min(1, 'Description is required').max(200),
+  frequency: z.enum(RECURRING_FREQUENCIES),
+  nextDueDate: dateStringField,
+  endDate: dateStringField.nullable().optional(),
+})
+export type RecurringCreateInput = z.infer<typeof recurringCreateSchema>
+
+export const recurringUpdateSchema = z
+  .object({
+    accountId: idSchema.optional(),
+    categoryId: idSchema.nullable().optional(),
+    amount: moneyField({ positive: true }).optional(),
+    description: z.string().trim().min(1).max(200).optional(),
+    frequency: z.enum(RECURRING_FREQUENCIES).optional(),
+    nextDueDate: dateStringField.optional(),
+    endDate: dateStringField.nullable().optional(),
+    isActive: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, 'No fields to update')
+export type RecurringUpdateInput = z.infer<typeof recurringUpdateSchema>
+
+export const recurringListQuerySchema = z.object({
+  active: z.union([z.literal('1'), z.literal('true'), z.literal('0'), z.literal('false')]).optional(),
+})
+
+/* -------------------------------- bills (PRD §33) -------------------------------- */
+
+export const billCreateSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(120),
+  amount: moneyField({ positive: true }),
+  dueDate: dateStringField,
+  accountId: idSchema.nullable().optional(),
+  categoryId: idSchema.nullable().optional(),
+})
+export type BillCreateInput = z.infer<typeof billCreateSchema>
+
+export const billUpdateSchema = z
+  .object({
+    name: z.string().trim().min(1).max(120).optional(),
+    amount: moneyField({ positive: true }).optional(),
+    dueDate: dateStringField.optional(),
+    accountId: idSchema.nullable().optional(),
+    categoryId: idSchema.nullable().optional(),
+    status: z.enum(BILL_STATUSES).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, 'No fields to update')
+export type BillUpdateInput = z.infer<typeof billUpdateSchema>
+
+/* ------------------------------ AI endpoints (PRD §37–§39) ------------------------------ */
+
+export const aiParseRequestSchema = z.object({
+  text: z.string().trim().min(1, 'Enter a transaction note').max(500),
+})
+export type AiParseRequest = z.infer<typeof aiParseRequestSchema>
+
+export const aiAskRequestSchema = z.object({
+  question: z.string().trim().min(1, 'Question is required').max(1000),
+  conversationId: idSchema.optional(),
+})
+export type AiAskRequest = z.infer<typeof aiAskRequestSchema>
+
+/* -------------------------------- forecast (PRD §36) -------------------------------- */
+
+export const forecastQuerySchema = z.object({
+  days: z.coerce
+    .number()
+    .int()
+    .refine((v) => (FORECAST_HORIZONS as readonly number[]).includes(v), 'Forecast horizon must be 30, 60 or 90 days')
+    .default(30),
+})
+export type ForecastQuery = z.infer<typeof forecastQuerySchema>
+
