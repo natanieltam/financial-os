@@ -14,6 +14,7 @@ const actionError = ref<string | null>(null)
 const showForm = ref(false)
 const pending = ref(false)
 const deletingId = ref<string | null>(null)
+const restoringId = ref<string | null>(null)
 
 const form = reactive({ name: '', type: 'bank', initialBalance: '0' })
 const fieldErrors = reactive<Record<string, string>>({})
@@ -65,6 +66,19 @@ async function archive(account: AccountDTO): Promise<void> {
     actionError.value = apiErrorMessage(toRequestError(err))
   } finally {
     deletingId.value = null
+  }
+}
+
+async function restore(account: AccountDTO): Promise<void> {
+  restoringId.value = account.id
+  actionError.value = null
+  try {
+    await useApi(`/api/accounts/${account.id}`, { method: 'PATCH', body: { status: 'active' } })
+    await load()
+  } catch (err) {
+    actionError.value = apiErrorMessage(toRequestError(err))
+  } finally {
+    restoringId.value = null
   }
 }
 
@@ -155,6 +169,15 @@ function labelize(value: string): string {
               @click="archive(account)"
             >
               {{ deletingId === account.id ? 'Archiving\u2026' : 'Archive' }}
+            </button>
+            <button
+              v-else
+              type="button"
+              class="text-emerald-400 hover:text-emerald-300 disabled:opacity-50"
+              :disabled="restoringId === account.id"
+              @click="restore(account)"
+            >
+              {{ restoringId === account.id ? 'Restoring\u2026' : 'Restore' }}
             </button>
           </div>
         </article>
