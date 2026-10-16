@@ -2,7 +2,7 @@
 import type { HealthResult } from '../../server/services/analytics/health'
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 
-useHead({ title: 'Financial health \u00b7 Financial OS' })
+useHead({ title: 'Financial health · Financial OS' })
 
 const health = ref<HealthResult | null>(null)
 const loading = ref(true)
@@ -79,7 +79,7 @@ function componentTone(score: number | null): string {
                 <div>
                   <p class="text-sm font-medium">{{ component.label }}</p>
                   <p class="text-xs text-muted-foreground">
-                    Weight {{ component.weight }}% \u00b7 {{ component.raw ?? 'insufficient data' }}
+                    Weight {{ component.weight }}% · {{ component.raw ?? 'insufficient data' }}
                   </p>
                 </div>
                 <p class="text-lg font-semibold tabular-nums" :class="componentTone(component.score)">

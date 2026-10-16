@@ -9,7 +9,7 @@ import type {
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDate, formatMoney, percent } from '../lib/format'
 
-useHead({ title: 'Reports \u00b7 Financial OS' })
+useHead({ title: 'Reports · Financial OS' })
 
 const periods = ['7d', '30d', '90d', '1m', '3m', '6m', '1y'] as const
 type Period = (typeof periods)[number]
@@ -167,7 +167,7 @@ function changeTone(value: number | null, goodWhenDown: boolean): string {
                       <span class="h-2.5 w-2.5 rounded-full" :style="{ backgroundColor: row.categoryColor ?? '#52525b' }" />
                       {{ row.categoryName }}
                     </span>
-                    <span class="tabular-nums text-muted-foreground">{{ formatMoney(row.total) }} \u00b7 {{ percent(row.sharePercent) }}</span>
+                    <span class="tabular-nums text-muted-foreground">{{ formatMoney(row.total) }} · {{ percent(row.sharePercent) }}</span>
                   </div>
                   <div class="mt-1 h-1.5 overflow-hidden rounded-full bg-secondary">
                     <div class="h-full rounded-full bg-indigo-400" :style="{ width: `${Math.min(100, row.sharePercent)}%` }" />
@@ -178,7 +178,7 @@ function changeTone(value: number | null, goodWhenDown: boolean): string {
           </section>
 
           <section class="rounded-xl border border-border bg-card p-4">
-            <h2 class="mb-3 text-sm font-medium">Account distribution \u00b7 total {{ formatMoney(accountReport?.total) }}</h2>
+            <h2 class="mb-3 text-sm font-medium">Account distribution · total {{ formatMoney(accountReport?.total) }}</h2>
             <UiStateBlock
               :empty="!accountReport || accountReport.accounts.length === 0"
               empty-title="No accounts"

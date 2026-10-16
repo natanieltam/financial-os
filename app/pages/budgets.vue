@@ -6,7 +6,7 @@ import { BUDGET_PERIODS } from '#shared/constants/finance'
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDate, formatMoney, percent } from '../lib/format'
 
-useHead({ title: 'Budgets \u00b7 Financial OS' })
+useHead({ title: 'Budgets · Financial OS' })
 
 const budgets = ref<BudgetDTO[]>([])
 const categories = ref<CategoryDTO[]>([])
@@ -102,7 +102,7 @@ function barTone(status: string): string {
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="text-xl font-semibold tracking-tight">Budgets</h1>
-        <p class="text-sm text-muted-foreground">Per-category limits per period \u00b7 spending is read live from transactions</p>
+        <p class="text-sm text-muted-foreground">Per-category limits per period · spending is read live from transactions</p>
       </div>
       <button
         type="button"
@@ -179,7 +179,7 @@ function barTone(status: string): string {
             <div>
               <h2 class="text-sm font-semibold">{{ budget.name }}</h2>
               <p class="text-xs text-muted-foreground">
-                {{ budget.period }} \u00b7 {{ formatDate(budget.window.start) }} \u2013 {{ formatDate(budget.window.end) }}
+                {{ budget.period }} · {{ formatDate(budget.window.start) }} \u2013 {{ formatDate(budget.window.end) }}
               </p>
             </div>
             <div class="flex items-center gap-3">
@@ -203,7 +203,7 @@ function barTone(status: string): string {
             />
           </div>
           <p class="mt-1.5 text-xs text-muted-foreground tabular-nums">
-            {{ formatMoney(budget.totals.spent) }} of {{ formatMoney(budget.totals.budgeted) }} spent \u00b7 {{ formatMoney(budget.totals.remaining) }} remaining
+            {{ formatMoney(budget.totals.spent) }} of {{ formatMoney(budget.totals.budgeted) }} spent · {{ formatMoney(budget.totals.remaining) }} remaining
           </p>
 
           <ul v-if="budget.items.length" class="mt-4 divide-y divide-border border-t border-border">

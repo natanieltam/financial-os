@@ -5,7 +5,7 @@ import type { TransactionDTO, TransactionListResult } from '../../server/service
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDate, formatMoney } from '../lib/format'
 
-useHead({ title: 'Transactions \u00b7 Financial OS' })
+useHead({ title: 'Transactions · Financial OS' })
 
 const list = ref<TransactionListResult | null>(null)
 const accounts = ref<AccountDTO[]>([])
@@ -95,7 +95,7 @@ async function remove(tx: TransactionDTO): Promise<void> {
       <div>
         <h1 class="text-xl font-semibold tracking-tight">Transactions</h1>
         <p class="text-sm text-muted-foreground">
-          <template v-if="list">{{ list.total }} transactions \u00b7 {{ formatMoney(list.summary.income) }} in / {{ formatMoney(list.summary.expense) }} out</template>
+          <template v-if="list">{{ list.total }} transactions · {{ formatMoney(list.summary.income) }} in / {{ formatMoney(list.summary.expense) }} out</template>
           <template v-else>Loading\u2026</template>
         </p>
       </div>

@@ -2,7 +2,7 @@
 import { z } from 'zod'
 import { apiErrorMessage, toRequestError } from '../composables/useApi'
 
-useHead({ title: 'Sign in \u00b7 Financial OS' })
+useHead({ title: 'Sign in · Financial OS' })
 definePageMeta({ layout: false })
 
 const router = useRouter()

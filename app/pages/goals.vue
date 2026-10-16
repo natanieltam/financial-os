@@ -5,7 +5,7 @@ import { goalCreateSchema } from '#shared/schemas/finance'
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDate, formatMoney, percent } from '../lib/format'
 
-useHead({ title: 'Goals \u00b7 Financial OS' })
+useHead({ title: 'Goals · Financial OS' })
 
 const goals = ref<GoalDTO[]>([])
 const loading = ref(true)
@@ -183,7 +183,7 @@ function barTone(progress: number): string {
               <h2 class="text-sm font-semibold">{{ goal.name }}</h2>
               <p class="text-xs text-muted-foreground">
                 {{ formatMoney(goal.currentAmount) }} of {{ formatMoney(goal.targetAmount) }}
-                <template v-if="goal.deadline"> \u00b7 due {{ formatDate(goal.deadline) }}</template>
+                <template v-if="goal.deadline"> · due {{ formatDate(goal.deadline) }}</template>
               </p>
             </div>
             <span

@@ -3,7 +3,7 @@ import type { CategoryDTO } from '../../server/services/categories/service'
 import { categoryCreateSchema } from '#shared/schemas/finance'
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 
-useHead({ title: 'Categories \u00b7 Financial OS' })
+useHead({ title: 'Categories · Financial OS' })
 
 const categories = ref<CategoryDTO[]>([])
 const loading = ref(true)
@@ -89,7 +89,7 @@ async function archive(category: CategoryDTO): Promise<void> {
     <header class="flex flex-wrap items-end justify-between gap-3">
       <div>
         <h1 class="text-xl font-semibold tracking-tight">Categories</h1>
-        <p class="text-sm text-muted-foreground">System defaults plus your own \u00b7 referenced categories are archived, never corrupted</p>
+        <p class="text-sm text-muted-foreground">System defaults plus your own · referenced categories are archived, never corrupted</p>
       </div>
     </header>
 

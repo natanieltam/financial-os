@@ -3,7 +3,7 @@ import type { DashboardPayload } from '../../server/services/dashboard/service'
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDateTime, formatMoney, percent } from '../lib/format'
 
-useHead({ title: 'Dashboard \u00b7 Financial OS' })
+useHead({ title: 'Dashboard · Financial OS' })
 
 const data = ref<DashboardPayload | null>(null)
 const loading = ref(true)
@@ -84,7 +84,7 @@ const healthTone = computed(() => {
         <!-- Cashflow chart -->
         <section class="mt-6 rounded-xl border border-border bg-card p-4">
           <div class="mb-2 flex items-center justify-between">
-            <h2 class="text-sm font-medium">Cashflow \u00b7 last 90 days</h2>
+            <h2 class="text-sm font-medium">Cashflow · last 90 days</h2>
             <p class="text-xs text-muted-foreground">Income vs expense, daily</p>
           </div>
           <UiStateBlock
@@ -153,7 +153,7 @@ const healthTone = computed(() => {
                   <div class="min-w-0">
                     <p class="truncate text-sm font-medium">{{ tx.description || tx.merchant || tx.type }}</p>
                     <p class="text-[11px] text-muted-foreground">
-                      {{ formatDateTime(tx.transactionDate) }}<template v-if="tx.accountName"> \u00b7 {{ tx.accountName }}</template><template v-if="tx.categoryName"> \u00b7 {{ tx.categoryName }}</template>
+                      {{ formatDateTime(tx.transactionDate) }}<template v-if="tx.accountName"> · {{ tx.accountName }}</template><template v-if="tx.categoryName"> · {{ tx.categoryName }}</template>
                     </p>
                   </div>
                   <p
@@ -214,7 +214,7 @@ const healthTone = computed(() => {
             </div>
 
             <div>
-              <h2 class="mb-3 text-sm font-medium">Spending by category \u00b7 this month</h2>
+              <h2 class="mb-3 text-sm font-medium">Spending by category · this month</h2>
               <UiStateBlock
                 :empty="categorySlices.length === 0"
                 empty-title="No spending this month"

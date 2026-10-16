@@ -5,7 +5,7 @@ import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatMoney } from '../lib/format'
 import { ACCOUNT_TYPES } from '#shared/constants/finance'
 
-useHead({ title: 'Accounts \u00b7 Financial OS' })
+useHead({ title: 'Accounts · Financial OS' })
 
 const accounts = ref<AccountDTO[]>([])
 const loading = ref(true)
