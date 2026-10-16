@@ -27,12 +27,15 @@ const initials = computed(() => {
   return name.slice(0, 1).toUpperCase()
 })
 
+const { mode: themeMode, toggle: toggleTheme, init: initTheme } = useTheme()
+
 onMounted(async () => {
+  initTheme()
   try {
     const me = await useApi<Me>('/api/me')
     user.value = me.user
   } catch {
-    await router.replace('/login')
+    await router.replace('/welcome')
   }
 })
 
@@ -42,7 +45,7 @@ async function logout(): Promise<void> {
   } catch (error) {
     console.warn(apiErrorMessage(toRequestError(error)))
   }
-  await router.replace('/login')
+  await router.replace('/welcome')
 }
 </script>
 
@@ -70,6 +73,15 @@ async function logout(): Promise<void> {
           </NuxtLink>
         </nav>
         <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="flex h-8 w-8 items-center justify-center rounded-md border border-border text-sm text-muted-foreground transition-colors hover:text-foreground"
+            :aria-label="themeMode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
+            data-testid="theme-toggle"
+            @click="toggleTheme"
+          >
+            {{ themeMode === 'dark' ? '☀' : '☾' }}
+          </button>
           <div
             class="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-card text-xs font-semibold"
             :title="user?.email ?? ''"

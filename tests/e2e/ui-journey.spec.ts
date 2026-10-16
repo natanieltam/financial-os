@@ -14,6 +14,24 @@ async function expectHeading(page: Page, name: string) {
   await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
 }
 
+test('first visit without a session lands on the landing page', async ({ page }) => {
+  await page.goto('/')
+  await expect(page).toHaveURL('/welcome')
+  await expectHeading(page, 'Your money, finally legible.')
+  // menu choice: sign in or create account
+  await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Create account' })).toBeVisible()
+  // light/dark toggle applies to <html> and persists across reload
+  await expect(page.locator('html')).toHaveClass(/dark/)
+  // re-click until the hydrated handler picks it up (SSR button exists before listeners attach)
+  await expect(async () => {
+    await page.getByTestId('theme-toggle').click()
+    await expect(page.locator('html')).not.toHaveClass(/dark/)
+  }).toPass({ timeout: 10000 })
+  await page.reload()
+  await expect(page.locator('html')).not.toHaveClass(/dark/)
+})
+
 test('register, navigate all sections, open create flows, sign out', async ({ page }) => {
   // --- register (§71: register) ---
   await page.goto('/register')
@@ -68,10 +86,11 @@ test('register, navigate all sections, open create flows, sign out', async ({ pa
   await expect(page).toHaveURL('/health')
   await expectHeading(page, 'Financial health')
 
-  // --- sign out (§71: logout) ---
+  // --- sign out (§71: logout) → back to the landing page ---
   await page.getByRole('button', { name: 'Sign out' }).click()
-  await expect(page).toHaveURL('/login')
-  await expectHeading(page, 'Financial OS')
+  await expect(page).toHaveURL('/welcome')
+  await expectHeading(page, 'Your money, finally legible.')
+  await expect(page.getByRole('link', { name: 'Sign in' }).first()).toBeVisible()
 })
 
 test('an existing user can sign back in and reach the dashboard', async ({ page }) => {
@@ -84,8 +103,10 @@ test('an existing user can sign back in and reach the dashboard', async ({ page 
   await page.fill('#confirm', 'e2e-login-pass-123')
   await page.getByRole('button', { name: 'Create account' }).click()
   await expect(page).toHaveURL('/')
-  // sign out, then sign back in with the same credentials
+  // sign out → landing page → sign back in with the same credentials
   await page.getByRole('button', { name: 'Sign out' }).click()
+  await expect(page).toHaveURL('/welcome')
+  await page.getByRole('link', { name: 'Sign in' }).first().click()
   await expect(page).toHaveURL('/login')
   await page.fill('#email', email)
   await page.fill('#password', 'e2e-login-pass-123')

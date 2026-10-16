@@ -31,11 +31,22 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      htmlAttrs: { class: 'dark', lang: 'id' },
+      // NOTE: no class here — the theme-init script below owns the `dark` class
+      // (unhead would otherwise re-apply a config class on hydration and
+      // override the user's saved light preference after reload).
+      htmlAttrs: { lang: 'id' },
       title: 'Financial OS',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Self-hosted personal financial intelligence' },
+      ],
+      // Apply the stored light/dark preference before first paint (no flash).
+      script: [
+        {
+          key: 'theme-init',
+          innerHTML:
+            "(function(){try{var t=localStorage.getItem('finos-theme');if(t==='light'){document.documentElement.classList.remove('dark')}else{document.documentElement.classList.add('dark')}}catch(e){}})()",
+        },
       ],
     },
   },
