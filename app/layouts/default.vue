@@ -16,6 +16,7 @@ import {
   Sun,
   Tags,
   Target,
+  TrendingUp,
   Wallet,
   X,
 } from 'lucide-vue-next'
@@ -46,6 +47,7 @@ const nav: NavItem[] = [
   { to: '/bills', label: 'Bills', icon: ReceiptText },
   { to: '/forecast', label: 'Forecast', icon: ChartLine },
   { to: '/ask', label: 'Ask AI', icon: Sparkles },
+  { to: '/investments', label: 'Investasi', icon: TrendingUp },
   { to: '/goals', label: 'Goals', icon: Target },
   { to: '/health', label: 'Health', icon: HeartPulse },
   { to: '/reports', label: 'Reports', icon: ChartPie },
