@@ -1,5 +1,6 @@
 import {
   index,
+  integer,
   numeric,
   pgTable,
   text,
@@ -11,45 +12,44 @@ import {
 import { users } from './users'
 
 /**
- * Mutual funds master data — sourced from bibit-reksadana CSV (OJK/Bibit/Bareksa).
- * One row per fund product, not per user.
+ * Mutual funds master data — sourced from the free `bibit-reksadana` CSV
+ * (which mirrors OJK/Bibit/Bareksa listings). One row per fund product,
+ * not per user.
+ *
+ * Returns are NOT denormalized here: the upstream CSV carries no performance
+ * numbers at all, so period returns are derived from `fund_nav_history` at
+ * read time (see `getFundReturns`). That keeps the stored data honest — a
+ * return figure can never go stale relative to the NAV rows it came from.
  */
 export const mutualFunds = pgTable(
   'mutual_funds',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    // External identifiers
-    bibitId: varchar('bibit_id', { length: 32 }).unique(), // e.g. 'RD831'
+    /**
+     * Stable upstream product code (CSV column `id`, e.g. 'BRK3', 'RD1').
+     * Present on every row and unique, so it is the sync merge key.
+     */
+    code: varchar('code', { length: 32 }).notNull().unique(),
+    // Vendor identifiers — `bibitId` is what per-fund NAV history is fetched by.
+    bibitId: varchar('bibit_id', { length: 32 }), // null when upstream has no Bibit listing
     bareksaId: varchar('bareksa_id', { length: 32 }),
     kontanId: varchar('kontan_id', { length: 32 }),
+    makmurId: varchar('makmur_id', { length: 32 }),
     ojkName: text('ojk_name'),
     // Fund metadata
     name: text('name').notNull(),
     otherNames: text('other_names'),
-    manager: text('manager').notNull(),
-    type: varchar('type', { length: 32 }).notNull(), // 'Pasar Uang', 'Obligasi', 'Saham', 'Campuran', 'Terproteksi', 'Global', 'DPLK', 'DIRE', 'ETF'
+    manager: text('manager'), // 235 rows have no manager; nullable keeps them alive
+    /** Upstream uses free-form labels: 'Pasar Uang', 'Terproteksi', 'Penyertaan Terbatas', ... */
+    type: varchar('type', { length: 48 }).notNull(),
     currency: varchar('currency', { length: 3 }).notNull().default('IDR'),
     sharia: varchar('sharia', { length: 5 }).notNull().default('false'), // 'true' | 'false'
     launchDate: timestamp('launch_date', { withTimezone: true }),
-    // Latest snapshot (updated by sync job)
+    isTradable: varchar('is_tradable', { length: 5 }).notNull().default('false'), // has a Bibit NAV feed
+    // Latest snapshot, refreshed by the sync job from the newest NAV row.
     latestNav: numeric('latest_nav', { precision: 20, scale: 4 }),
     latestNavDate: timestamp('latest_nav_date', { withTimezone: true }),
-    aum: numeric('aum', { precision: 20, scale: 2 }),
-    // Returns (1D, 1M, 3M, YTD, 1Y, 3Y, 5Y, 10Y, inception)
-    return1d: numeric('return_1d', { precision: 8, scale: 4 }),
-    return1m: numeric('return_1m', { precision: 8, scale: 4 }),
-    return3m: numeric('return_3m', { precision: 8, scale: 4 }),
-    returnYtd: numeric('return_ytd', { precision: 8, scale: 4 }),
-    return1y: numeric('return_1y', { precision: 8, scale: 4 }),
-    return3y: numeric('return_3y', { precision: 8, scale: 4 }),
-    return5y: numeric('return_5y', { precision: 8, scale: 4 }),
-    return10y: numeric('return_10y', { precision: 8, scale: 4 }),
-    returnInception: numeric('return_inception', { precision: 8, scale: 4 }),
-    // Metadata
-    expenseRatio: numeric('expense_ratio', { precision: 6, scale: 4 }),
-    minPurchase: numeric('min_purchase', { precision: 20, scale: 2 }),
-    custodianBank: text('custodian_bank'),
-    isTradable: varchar('is_tradable', { length: 5 }).notNull().default('false'), // available on Bibit
+    navRows: integer('nav_rows').notNull().default(0),
     lastSyncedAt: timestamp('last_synced_at', { withTimezone: true }).defaultNow(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
@@ -65,7 +65,11 @@ export const mutualFunds = pgTable(
 
 /**
  * Daily NAV history per fund — one row per fund per trading day.
- * Sourced from bibit-reksadana data/bibit/nav/{bibitId}.csv
+ * Sourced from `data/bibit/nav/{bibitId}.csv` (columns: date, nav, nav_adjusted).
+ *
+ * `nav` is the quoted NAV; `navAdjusted` is the dividend-reinvested series and
+ * is preferred for period returns when present, because it is the honest
+ * measure of what an investor actually earned.
  */
 export const fundNavHistory = pgTable(
   'fund_nav_history',
@@ -81,14 +85,14 @@ export const fundNavHistory = pgTable(
   },
   (t) => [
     uniqueIndex('fund_nav_history_fund_date_uniq').on(t.fundId, t.date),
-    index('fund_nav_history_fund_idx').on(t.fundId),
-    index('fund_nav_history_date_idx').on(t.date),
+    // Composite index serves both the "latest row per fund" lookup and per-fund range scans.
+    index('fund_nav_history_fund_date_idx').on(t.fundId, t.date),
   ],
 )
 
 /**
- * User's tracked/watched funds — personal watchlist, not holdings.
- * Holdings would be in accounts (type='investment') + transactions.
+ * User's tracked/watched funds — a personal watchlist, not holdings.
+ * Holdings would live in `accounts` (type='investment') plus `transactions`.
  */
 export const userFundWatchlist = pgTable(
   'user_fund_watchlist',

@@ -1,25 +1,23 @@
-import { getQuery } from 'h3'
+import { getQuery, getRouterParam } from 'h3'
 import { z } from 'zod'
 import { apiHandler } from '../../../utils/api'
 import { requireUser } from '../../../utils/auth'
-import { getFundById, getFundNavHistory } from '../../../services/mutual_funds/service'
+import { getFundById, getFundNavSeries } from '../../../services/mutual_funds/service'
 
-const navQuerySchema = z.object({
-  fundId: z.string().uuid(),
-  from: z.coerce.date().optional(),
-  to: z.coerce.date().optional(),
-  limit: z.coerce.number().int().positive().max(1000).optional(),
+const navSeriesQuerySchema = z.object({
+  days: z.coerce.number().int().positive().max(3650).optional(),
 })
 
 export default apiHandler(async (event) => {
   requireUser(event)
-  const query = navQuerySchema.parse(getQuery(event))
+  const fundId = getRouterParam(event, 'id') ?? ''
+  const query = navSeriesQuerySchema.parse(getQuery(event))
 
-  const fund = await getFundById(query.fundId)
+  const fund = await getFundById(fundId)
   if (!fund) {
-    return { navHistory: [] }
+    return { navSeries: [] }
   }
 
-  const navHistory = await getFundNavHistory(query)
-  return { navHistory }
+  const navSeries = await getFundNavSeries(fundId, query.days ?? 365)
+  return { navSeries }
 })

@@ -1,5 +1,5 @@
 {
-  "id": "02b9af4c-c591-41ae-9ee0-0144b1bd52f5",
+  "id": "c49610d5-b1e8-4b34-8ee1-d98602e7ed30",
   "prevId": "44300d39-8ebb-47a9-b0b6-5c5fac7cb2a6",
   "version": "7",
   "dialect": "postgresql",
@@ -1774,24 +1774,15 @@
           "method": "btree",
           "with": {}
         },
-        "fund_nav_history_fund_idx": {
-          "name": "fund_nav_history_fund_idx",
+        "fund_nav_history_fund_date_idx": {
+          "name": "fund_nav_history_fund_date_idx",
           "columns": [
             {
               "expression": "fund_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "fund_nav_history_date_idx": {
-          "name": "fund_nav_history_date_idx",
-          "columns": [
+            },
             {
               "expression": "date",
               "isExpression": false,
@@ -1837,6 +1828,12 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
+        "code": {
+          "name": "code",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true
+        },
         "bibit_id": {
           "name": "bibit_id",
           "type": "varchar(32)",
@@ -1851,6 +1848,12 @@
         },
         "kontan_id": {
           "name": "kontan_id",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "makmur_id": {
+          "name": "makmur_id",
           "type": "varchar(32)",
           "primaryKey": false,
           "notNull": false
@@ -1877,11 +1880,11 @@
           "name": "manager",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "type": {
           "name": "type",
-          "type": "varchar(32)",
+          "type": "varchar(48)",
           "primaryKey": false,
           "notNull": true
         },
@@ -1905,6 +1908,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_tradable": {
+          "name": "is_tradable",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'false'"
+        },
         "latest_nav": {
           "name": "latest_nav",
           "type": "numeric(20, 4)",
@@ -1917,90 +1927,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "aum": {
-          "name": "aum",
-          "type": "numeric(20, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_1d": {
-          "name": "return_1d",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_1m": {
-          "name": "return_1m",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_3m": {
-          "name": "return_3m",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_ytd": {
-          "name": "return_ytd",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_1y": {
-          "name": "return_1y",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_3y": {
-          "name": "return_3y",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_5y": {
-          "name": "return_5y",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_10y": {
-          "name": "return_10y",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "return_inception": {
-          "name": "return_inception",
-          "type": "numeric(8, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "expense_ratio": {
-          "name": "expense_ratio",
-          "type": "numeric(6, 4)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "min_purchase": {
-          "name": "min_purchase",
-          "type": "numeric(20, 2)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "custodian_bank": {
-          "name": "custodian_bank",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "is_tradable": {
-          "name": "is_tradable",
-          "type": "varchar(5)",
+        "nav_rows": {
+          "name": "nav_rows",
+          "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "default": "'false'"
+          "default": 0
         },
         "last_synced_at": {
           "name": "last_synced_at",
@@ -2104,11 +2036,11 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "mutual_funds_bibit_id_unique": {
-          "name": "mutual_funds_bibit_id_unique",
+        "mutual_funds_code_unique": {
+          "name": "mutual_funds_code_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "bibit_id"
+            "code"
           ]
         }
       },

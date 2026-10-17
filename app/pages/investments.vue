@@ -2,28 +2,39 @@
 import { apiErrorMessage, toRequestError, useApi } from '../composables/useApi'
 import { formatDate, formatMoney } from '../lib/format'
 
-useHead({ title: 'Investasi \u00b7 Financial OS' })
+useHead({ title: 'Investasi · Financial OS' })
+
+type FundReturns = {
+  day1: number | null
+  week1: number | null
+  month1: number | null
+  month3: number | null
+  month6: number | null
+  ytd: number | null
+  year1: number | null
+  year3: number | null
+  year5: number | null
+  inception: number | null
+}
 
 type Fund = {
   id: string
+  code: string
   bibitId: string | null
   name: string
-  manager: string
+  manager: string | null
   type: string
   currency: string
-  sharia: string
-  latestNav: string | null
+  sharia: boolean
+  launchDate: string | null
+  isTradable: boolean
+  latestNav: number | null
   latestNavDate: string | null
-  return1d: string | null
-  return1m: string | null
-  return3m: string | null
-  returnYtd: string | null
-  return1y: string | null
-  returnInception: string | null
-  isTradable: string
+  navRows: number
+  returns: FundReturns
 }
 
-type NavPoint = { date: string; nav: string }
+type NavPoint = { date: string; nav: number | null; navAdjusted: number | null }
 
 const funds = ref<Fund[]>([])
 const total = ref(0)
@@ -32,12 +43,12 @@ const error = ref<string | null>(null)
 const syncing = ref(false)
 const syncResult = ref<string | null>(null)
 
-const filters = reactive({ type: '', search: '' })
+const filters = reactive({ type: '', search: '', sort: 'name' as const })
 const selected = ref<Fund | null>(null)
-const navHistory = ref<NavPoint[]>([])
+const navSeries = ref<NavPoint[]>([])
 const navLoading = ref(false)
 
-const TYPE_OPTIONS = ['', 'Pasar Uang', 'Obligasi', 'Saham', 'Campuran', 'Terproteksi', 'Global', 'DPLK', 'DIRE', 'ETF']
+const TYPE_OPTIONS = ['', 'Pasar Uang', 'Obligasi', 'Saham', 'Campuran', 'Terproteksi', 'Reksadana Global', 'Dana Investasi Real Estate', 'Penyertaan Terbatas', 'ETF', 'DPLK', 'Lainnya']
 
 const moneyMarket = computed(() => funds.value.filter((f) => f.type === 'Pasar Uang'))
 
@@ -45,10 +56,11 @@ async function load(): Promise<void> {
   loading.value = true
   error.value = null
   try {
-    const result = await useApi<{ funds: Fund[]; total: number }>('/api/funds', {
+    const result = await useApi<{ funds: Fund[]; total: number; limit: number; offset: number }>('/api/funds', {
       query: {
         type: filters.type || undefined,
         search: filters.search || undefined,
+        sort: filters.sort,
         limit: 200,
       },
     })
@@ -73,12 +85,15 @@ async function sync(): Promise<void> {
   syncing.value = true
   syncResult.value = null
   try {
-    const stats = await useApi<{ fundsInserted: number; fundsUpdated: number; navRowsInserted: number; errors: string[] }>(
-      '/api/funds/sync',
-      { method: 'POST' },
-    )
+    const stats = await useApi<{
+      fundsUpserted: number
+      navFundsSynced: number
+      navRowsWritten: number
+      durationMs: number
+      errors: string[]
+    }>('/api/funds/sync', { method: 'POST' })
     const errCount = stats.errors.length
-    syncResult.value = `Synced ${stats.fundsInserted + stats.fundsUpdated} funds \u00b7 ${stats.navRowsInserted} NAV rows${errCount ? ` \u00b7 ${errCount} errors` : ''}`
+    syncResult.value = `Synced ${stats.fundsUpserted} funds · ${stats.navFundsSynced} funds with NAV · ${stats.navRowsWritten} NAV rows (${(stats.durationMs / 1000).toFixed(1)}s)${errCount ? ` · ${errCount} errors` : ''}`
     await load()
   } catch (err) {
     syncResult.value = apiErrorMessage(toRequestError(err))
@@ -89,13 +104,13 @@ async function sync(): Promise<void> {
 
 async function openDetail(fund: Fund): Promise<void> {
   selected.value = fund
-  navHistory.value = []
+  navSeries.value = []
   navLoading.value = true
   try {
-    const result = await useApi<{ navHistory: NavPoint[] }>(`/api/funds/${fund.id}/nav`, {
-      query: { limit: 180 },
+    const result = await useApi<{ navSeries: NavPoint[] }>(`/api/funds/${fund.id}/nav`, {
+      query: { days: 365 },
     })
-    navHistory.value = [...result.navHistory].reverse()
+    navSeries.value = result.navSeries
   } catch (err) {
     error.value = apiErrorMessage(toRequestError(err))
   } finally {
@@ -119,29 +134,32 @@ function typeTone(type: string): string {
       return 'border-amber-500/30 text-amber-400'
     case 'Terproteksi':
       return 'border-teal-500/30 text-teal-400'
+    case 'Reksadana Global':
+      return 'border-indigo-500/30 text-indigo-400'
+    case 'Dana Investasi Real Estate':
+      return 'border-orange-500/30 text-orange-400'
+    case 'ETF':
+      return 'border-lime-500/30 text-lime-400'
     default:
       return 'border-border text-muted-foreground'
   }
 }
 
-function retTone(value: string | null): string {
-  const n = Number(value)
-  if (!Number.isFinite(n) || n === 0) return 'text-muted-foreground'
-  return n > 0 ? 'text-emerald-400' : 'text-rose-400'
+function retTone(value: number | null): string {
+  if (value === null || value === 0 || !Number.isFinite(value)) return 'text-muted-foreground'
+  return value > 0 ? 'text-emerald-400' : 'text-rose-400'
 }
 
-function retText(value: string | null): string {
-  const n = Number(value)
-  if (!Number.isFinite(n)) return '\u2014'
-  return `${n > 0 ? '+' : ''}${n.toLocaleString('id-ID', { maximumFractionDigits: 2 })}%`
+function retText(value: number | null): string {
+  if (value === null || !Number.isFinite(value)) return '—'
+  return `${value > 0 ? '+' : ''}${value.toLocaleString('id-ID', { maximumFractionDigits: 2 })}%`
 }
 
 /** Minimal inline SVG sparkline — no chart dependency. */
 const sparkline = computed(() => {
-  const pts = navHistory.value
+  const pts = navSeries.value.filter((p) => p.navAdjusted !== null)
   if (pts.length < 2) return null
-  const vals = pts.map((p) => Number(p.nav)).filter(Number.isFinite)
-  if (vals.length < 2) return null
+  const vals = pts.map((p) => p.navAdjusted!)
   const min = Math.min(...vals)
   const max = Math.max(...vals)
   const range = max - min || 1
@@ -172,7 +190,7 @@ const sparkline = computed(() => {
         :disabled="syncing"
         @click="sync"
       >
-        {{ syncing ? 'Syncing\u2026' : 'Sync NAV' }}
+        {{ syncing ? 'Syncing…' : 'Sync NAV' }}
       </button>
     </div>
 
@@ -192,7 +210,7 @@ const sparkline = computed(() => {
       </div>
       <div class="rounded-xl border border-border bg-card p-4">
         <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Syariah</p>
-        <p class="mt-1 text-2xl font-semibold tabular-nums">{{ funds.filter((f) => f.sharia === 'true').length }}</p>
+        <p class="mt-1 text-2xl font-semibold tabular-nums">{{ funds.filter((f) => f.sharia).length }}</p>
       </div>
       <div class="rounded-xl border border-border bg-card p-4">
         <p class="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Loaded</p>
@@ -214,10 +232,22 @@ const sparkline = computed(() => {
           {{ t || 'Semua' }}
         </button>
       </div>
+      <select
+        v-model="filters.sort"
+        class="rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+        @change="load"
+      >
+        <option value="name">Nama</option>
+        <option value="nav">NAV Terakhir</option>
+        <option value="return1d">1 Hari</option>
+        <option value="return1m">1 Bulan</option>
+        <option value="return1y">1 Tahun</option>
+        <option value="returnInception">Sejak Awal</option>
+      </select>
       <input
         v-model="filters.search"
         type="search"
-        placeholder="Cari nama / manajer…"
+        placeholder="Cari nama / manajer / kode…"
         class="ml-auto w-56 rounded-md border border-border bg-background px-3 py-1.5 text-sm"
         @input="onSearchInput"
       />
@@ -239,7 +269,7 @@ const sparkline = computed(() => {
           :disabled="syncing"
           @click="sync"
         >
-          {{ syncing ? 'Syncing\u2026' : 'Sync NAV' }}
+          {{ syncing ? 'Syncing…' : 'Sync NAV' }}
         </button>
       </template>
 
@@ -250,9 +280,10 @@ const sparkline = computed(() => {
               <th class="px-4 py-2.5 font-medium">Nama</th>
               <th class="px-4 py-2.5 font-medium">Jenis</th>
               <th class="px-4 py-2.5 text-right font-medium">NAV</th>
-              <th class="hidden px-4 py-2.5 text-right font-medium md:table-cell">1 Bulan</th>
-              <th class="hidden px-4 py-2.5 text-right font-medium md:table-cell">1 Tahun</th>
-              <th class="px-4 py-2.5 text-right font-medium">NAV Tanggal</th>
+              <th class="hidden px-4 py-2.5 text-right font-medium md:table-cell">1 Bln</th>
+              <th class="hidden px-4 py-2.5 text-right font-medium md:table-cell">1 Thn</th>
+              <th class="hidden px-4 py-2.5 text-right font-medium lg:table-cell">YTD</th>
+              <th class="px-4 py-2.5 text-right font-medium">Tanggal</th>
             </tr>
           </thead>
           <tbody>
@@ -266,17 +297,18 @@ const sparkline = computed(() => {
             >
               <td class="px-4 py-2.5">
                 <p class="font-medium">{{ fund.name }}</p>
-                <p class="text-xs text-muted-foreground">{{ fund.manager }}</p>
+                <p class="text-xs text-muted-foreground">{{ fund.manager || '—' }}</p>
               </td>
               <td class="px-4 py-2.5">
                 <span class="rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide" :class="typeTone(fund.type)">
                   {{ fund.type }}
                 </span>
-                <span v-if="fund.sharia === 'true'" class="ml-1 rounded-full border border-emerald-500/30 px-2 py-0.5 text-[10px] font-medium text-emerald-400">S</span>
+                <span v-if="fund.sharia" class="ml-1 rounded-full border border-emerald-500/30 px-2 py-0.5 text-[10px] font-medium text-emerald-400">S</span>
               </td>
               <td class="px-4 py-2.5 text-right tabular-nums">{{ formatMoney(fund.latestNav) }}</td>
-              <td class="hidden px-4 py-2.5 text-right tabular-nums md:table-cell" :class="retTone(fund.return1m)">{{ retText(fund.return1m) }}</td>
-              <td class="hidden px-4 py-2.5 text-right tabular-nums md:table-cell" :class="retTone(fund.return1y)">{{ retText(fund.return1y) }}</td>
+              <td class="hidden px-4 py-2.5 text-right tabular-nums md:table-cell" :class="retTone(fund.returns.month1)">{{ retText(fund.returns.month1) }}</td>
+              <td class="hidden px-4 py-2.5 text-right tabular-nums md:table-cell" :class="retTone(fund.returns.year1)">{{ retText(fund.returns.year1) }}</td>
+              <td class="hidden px-4 py-2.5 text-right tabular-nums lg:table-cell" :class="retTone(fund.returns.ytd)">{{ retText(fund.returns.ytd) }}</td>
               <td class="px-4 py-2.5 text-right text-xs text-muted-foreground">{{ formatDate(fund.latestNavDate) }}</td>
             </tr>
           </tbody>
@@ -291,7 +323,7 @@ const sparkline = computed(() => {
         <div class="flex items-start justify-between gap-3">
           <div>
             <h2 class="text-base font-semibold">{{ selected.name }}</h2>
-            <p class="text-xs text-muted-foreground">{{ selected.manager }}</p>
+            <p class="text-xs text-muted-foreground">{{ selected.manager || '—' }}</p>
           </div>
           <button type="button" class="text-sm text-muted-foreground hover:text-foreground" @click="closeDetail">Tutup</button>
         </div>
@@ -314,7 +346,7 @@ const sparkline = computed(() => {
             </svg>
             <div class="mt-1 flex items-center justify-between text-[11px] tabular-nums text-muted-foreground">
               <span>Low {{ formatMoney(String(sparkline.min)) }}</span>
-              <span :class="retTone(String(sparkline.changePct))">{{ retText(String(sparkline.changePct)) }}</span>
+              <span :class="retTone(sparkline.changePct)">{{ retText(sparkline.changePct) }}</span>
               <span>High {{ formatMoney(String(sparkline.max)) }}</span>
             </div>
           </div>
@@ -323,29 +355,35 @@ const sparkline = computed(() => {
 
         <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div
-v-for="item in [
-            { label: '1 Hari', value: selected.return1d },
-            { label: '1 Bulan', value: selected.return1m },
-            { label: '3 Bulan', value: selected.return3m },
-            { label: 'YTD', value: selected.returnYtd },
-            { label: '1 Tahun', value: selected.return1y },
-            { label: 'Sejak Awal', value: selected.returnInception },
-          ]" :key="item.label">
+            v-for="item in [
+              { label: '1 Hari', value: selected.returns.day1 },
+              { label: '1 Minggu', value: selected.returns.week1 },
+              { label: '1 Bulan', value: selected.returns.month1 },
+              { label: '3 Bulan', value: selected.returns.month3 },
+              { label: '6 Bulan', value: selected.returns.month6 },
+              { label: 'YTD', value: selected.returns.ytd },
+              { label: '1 Tahun', value: selected.returns.year1 },
+              { label: '3 Tahun', value: selected.returns.year3 },
+              { label: '5 Tahun', value: selected.returns.year5 },
+              { label: 'Sejak Awal', value: selected.returns.inception },
+            ]"
+            :key="item.label"
+          >
             <dt class="text-[11px] uppercase tracking-wide text-muted-foreground">{{ item.label }}</dt>
             <dd class="tabular-nums" :class="retTone(item.value)">{{ retText(item.value) }}</dd>
           </div>
         </dl>
 
-        <div class="mt-4 space-y-2 rounded-xl border border-border bg-background/40 p-4 text-xs">
+        <div class="mt-4 space-y-2 rounded-xl border border-border bg-background/40 p-4 text-xs" style="max-height: 200px; overflow-y: auto;">
           <p v-if="navLoading" class="text-muted-foreground">Memuat riwayat…</p>
-          <template v-else-if="navHistory.length">
+          <template v-else-if="navSeries.length">
             <div class="flex justify-between font-medium uppercase tracking-wide">
               <span class="text-muted-foreground">Tanggal</span>
-              <span class="text-muted-foreground">NAV</span>
+              <span class="text-muted-foreground">NAV (Adj)</span>
             </div>
-            <div v-for="point in [...navHistory].reverse()" :key="point.date" class="flex justify-between tabular-nums">
+            <div v-for="point in [...navSeries].reverse()" :key="point.date" class="flex justify-between tabular-nums">
               <span class="text-muted-foreground">{{ formatDate(point.date) }}</span>
-              <span>{{ formatMoney(point.nav) }}</span>
+              <span>{{ formatMoney(point.navAdjusted) }}</span>
             </div>
           </template>
           <p v-else class="text-muted-foreground">Tidak ada riwayat untuk dana ini.</p>
