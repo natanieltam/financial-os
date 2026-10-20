@@ -10,7 +10,7 @@ User → Nuxt UI → Server API → AI Service → AIProvider (Kenari) → struc
 
 - Interface `AIProvider` (`server/services/ai/ai.types.ts`); implementasi: `KenariProvider` (OpenAI-compatible chat completions).
 - Konfigurasi runtime: `KENARI_BASE_URL`, `KENARI_API_KEY`, `KENARI_MODEL` (override runtime: `NUXT_KENARI_*`). Key hanya hidup di server; tidak pernah dikirim ke browser.
-- Tanpa key: `requireAiProvider` melempar 503 `AI_UNAVAILABLE` — endpoint lain tetap jalan, tidak ada fabrikasi sukses (PRD §94).
+- Tanpa key: `requireAiProvider` melempar 503 `AI_UNAVAILABLE` — endpoint lain tetap jalan, tidak ada fabrikasi sukses.
 - Error dinormalisasi: provider down/timeout → 503, rate limit provider → 429, respons tidak valid → 503; pesan aman tanpa payload/key/stack.
 
 ## Output tidak terpercaya (PRD §50)
