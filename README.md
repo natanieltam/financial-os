@@ -1,56 +1,121 @@
 # Financial OS
 
-**Self-hosted personal financial intelligence application** — catat pemasukan & pengeluaran, kelola akun, atur budget dan target, proyeksikan cashflow, dan tanya AI soal keuanganmu.
+**Self-hosted personal finance intelligence for tracking money, understanding cash flow, and making better decisions.**
 
-> **Status:** Fungsional penuh (Phase 1–21). Auth, database, seluruh modul keuangan, AI layer opsional, backup/restore, dan test suite sudah jalan.
+Financial OS is a modular Nuxt application for managing accounts, transactions, budgets, recurring payments, bills, goals, investments, reports, and financial health in one place. It keeps authoritative calculations on the server, stores money precisely in PostgreSQL, and provides an optional AI layer for natural-language questions and transaction parsing.
 
----
+> **Status:** Functional end-to-end application with authentication, PostgreSQL persistence, financial modules, optional AI integration, backup tooling, and unit/integration/E2E tests.
 
-## Fitur
+## Features
 
-| Modul | Isi |
-| --- | --- |
-| **Dashboard** | Ringkasan cashflow, net worth, transaksi terbaru, dan tagihan mendatang |
-| **Transactions** | CRUD income/expense, transfer antar akun, filter & pencarian |
-| **Accounts** | Bank, e-wallet, cash, kartu kredit; saldo, arsip, dan restore akun |
-| **Categories** | Kategori income/expense (termasuk kategori sistem) untuk klasifikasi transaksi |
-| **Budgets** | Limit per kategori dengan periode dan progres pemakaian |
-| **Recurring** | Template transaksi berulang + proses pembuatan transaksi terjadwal |
-| **Bills** | Tagihan dengan status overdue / due soon / upcoming / paid dan aksi bayar |
-| **Forecast** | Proyeksi cashflow ke depan dari pola transaksi dan item berulang |
-| **Ask AI** | Tanya keuangan dengan bahasa natural + parser transaksi dari teks bebas |
-| **Goals** | Target tabungan dengan progres dan proyeksi waktu tercapai |
-| **Health** | Skor kesehatan finansial, tren net worth, dan rasio-rasio keuangan |
-| **Reports** | Analitik: tren cashflow, pengeluaran per kategori, distribusi akun, performa budget |
-| **Settings** | Ganti password akun (mengeluarkan perangkat lain dari sesi aktif) |
+- **Dashboard** — balances, lifetime and monthly cash flow, recent transactions, budgets, category spending, and financial-health score.
+- **Transactions** — create, edit, search, filter, paginate, and soft-delete income, expenses, and atomic account transfers.
+- **Accounts** — manage bank accounts, e-wallets, cash, and credit-card accounts with derived balances and archive support.
+- **Categories** — classify income and expenses with user-owned and system categories.
+- **Budgets** — define category spending limits and monitor progress, warnings, and exceeded budgets.
+- **Recurring transactions** — define templates and process scheduled transactions.
+- **Bills** — track upcoming, due-soon, overdue, and paid bills, including a pay action.
+- **Forecast** — project future cash flow from transaction history and recurring items.
+- **Goals** — track savings targets and estimate when goals may be reached.
+- **Financial health** — calculate a score, trends, and financial ratios from deterministic server-side data.
+- **Reports** — analyze cash flow, categories, accounts, and budget performance.
+- **Investments** — track mutual funds and synchronize NAV data through the server API.
+- **Ask AI** — ask questions about your own financial context or parse free-form text into an editable transaction preview.
+- **Responsive UI** — desktop sidebar, mobile navigation drawer, and persistent light/dark mode.
 
-**UI/UX:** layout responsif — sidebar tetap di desktop, drawer burger di layar kecil — plus light/dark mode dengan toggle yang tersimpan.
+## Design principles
 
----
+Financial OS is intentionally built as a **modular monolith**:
+
+```text
+Browser
+  -> Nuxt UI (app/)
+  -> Nitro server API (server/api/)
+  -> Domain services (server/services/)
+  -> Drizzle ORM (db/)
+  -> PostgreSQL
+
+Optional:
+  server/services/ai/ -> OpenAI-compatible provider (Kenari)
+```
+
+Important implementation rules:
+
+- The browser never connects directly to PostgreSQL.
+- Every financial query is scoped to the authenticated server-side session.
+- Monetary values use PostgreSQL `NUMERIC`, decimal strings, and BigInt-cent arithmetic rather than JavaScript floating-point arithmetic.
+- Financial mutations are validated and authorized on the server.
+- Transfers are written as atomic paired legs and rendered as one canonical transaction.
+- Transaction creation supports idempotency keys to protect against retries and double submissions.
+- AI output is untrusted: it is schema-validated, business-validated, and requires user confirmation before mutation.
+- Secrets and AI credentials remain server-side.
 
 ## Stack
 
-- **Framework:** Nuxt 4 (Vue 3, TypeScript strict, Nitro)
-- **UI:** Tailwind CSS 4 + shadcn-vue / Reka UI
-- **Database:** PostgreSQL 16 + Drizzle ORM (NUMERIC untuk uang, bukan float)
-- **Auth:** session cookie HttpOnly (Argon2id untuk password, HMAC-SHA256 untuk token sesi)
-- **AI (opsional):** API kompatibel OpenAI (Kenari)
-- **Chart:** ECharts
-- **Test:** Vitest (unit/integration) + Playwright (E2E browser)
-- **Lint/Format:** ESLint + Prettier
-- **Backup:** `pg_dump` (custom format) via script Python/batch
+- **Framework/runtime:** Nuxt 4, Vue 3, Nitro, TypeScript strict mode
+- **Styling/UI:** Tailwind CSS 4, Reka UI, Lucide Vue icons
+- **Database:** PostgreSQL 15+ with Drizzle ORM and SQL migrations
+- **Validation:** Zod
+- **Authentication:** HttpOnly session cookies, Argon2id password hashing, HMAC-SHA256 session-token storage
+- **Charts:** ECharts
+- **AI:** Optional OpenAI-compatible API provider through Kenari
+- **Testing:** Vitest and Playwright
+- **Tooling:** ESLint, Prettier, Drizzle Kit
 
----
+## Project structure
 
-## Mulai
+```text
+app/
+  pages/           Nuxt routes for dashboard, transactions, accounts, budgets, reports, and more
+  components/      Feature components, charts, transaction forms, and UI state blocks
+  composables/     Typed API client and theme state
+  layouts/         Responsive authenticated application shell
+  lib/             Formatting and frontend utilities
 
-### Prasyarat
+server/
+  api/             Nitro endpoints for auth, finance modules, analytics, reports, and AI
+  services/        Domain logic for transactions, budgets, goals, forecasts, reports, and AI
+  repositories/    Shared persistence helpers
+  middleware/      Session resolution, origin checks, and security headers
+  utils/           API envelopes, auth, password hashing, rate limits, and audit logging
 
-- Node.js ≥ 20 (di mesin ini: 26.7.0)
-- PostgreSQL ≥ 15 (di mesin ini: PostgreSQL 16 portable)
+db/
+  schema/          Drizzle tables for users, accounts, transactions, budgets, goals, bills, AI, and funds
+  migrations/      PostgreSQL migrations generated by Drizzle Kit
+  client.ts        Lazy server-side PostgreSQL/Drizzle client
+
+shared/
+  schemas/         Zod request and response schemas shared by app and server
+  money.ts         Exact money normalization, arithmetic, comparison, and IDR formatting
+  constants/       Shared finance constants
+
+tests/
+  *.test.ts        Unit and integration coverage for finance, auth, money, AI, and security
+  e2e/             Playwright browser journeys
+
+docs/
+  ARCHITECTURE.md  Runtime shape and architectural rules
+  AI.md            AI provider, validation, privacy, and confirmation flow
+  SECURITY.md      Authentication, authorization, CSRF, rate limits, and known gaps
+  DATABASE.md      Database details
+  DEPLOYMENT.md    Deployment guidance
+  BACKUP.md        Backup and restore procedures
+
+scripts/
+  backup.py        PostgreSQL backup helper
+  restore_test.py  Backup restore verification
+  *.cmd            Local database and production helpers
+```
+
+## Requirements
+
+- Node.js 20 or newer
+- PostgreSQL 15 or newer
 - Git
 
-### 1. Clone & install
+## Quick start
+
+### 1. Clone and install
 
 ```bash
 git clone https://github.com/natanieltam/financial-os.git
@@ -58,68 +123,90 @@ cd financial-os
 npm install
 ```
 
-### 2. Konfigurasi environment
+### 2. Configure the environment
 
 ```bash
 cp .env.example .env
 ```
 
-Isi nilainya:
+Set the required values in `.env`:
 
-| Variabel | Wajib | Keterangan |
+| Variable | Required | Description |
 | --- | --- | --- |
-| `DATABASE_URL` | ya | Connection string PostgreSQL, mis. `postgres://user:pass@127.0.0.1:5432/financial_os` |
-| `SESSION_SECRET` | ya | Minimal 32 karakter acak. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"` |
-| `KENARI_BASE_URL` / `KENARI_API_KEY` / `KENARI_MODEL` | tidak | Tanpa key, endpoint AI balas `503 AI_UNAVAILABLE` dan fitur lain tetap jalan normal |
+| `DATABASE_URL` | Yes | PostgreSQL connection string, for example `postgres://user:pass@127.0.0.1:5432/financial_os` |
+| `SESSION_SECRET` | Yes | Random secret of at least 32 characters |
+| `KENARI_BASE_URL` | No | OpenAI-compatible AI base URL; defaults to `https://kenari.id/v1` |
+| `KENARI_API_KEY` | No | AI provider key |
+| `KENARI_MODEL` | No | AI model name |
 
-`.env` sudah di-`gitignore` — jangan pernah commit isinya. Override runtime pada server hasil build memakai prefix `NUXT_` (`NUXT_KENARI_API_KEY`, dst).
+Generate a session secret with:
 
-### 3. Migrasi database
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+The AI layer is optional. If the Kenari credentials are not configured, AI endpoints return `AI_UNAVAILABLE` while the rest of the application remains usable.
+
+Never commit `.env` or production secrets. For a built server, runtime configuration can be overridden with `NUXT_`-prefixed variables such as `NUXT_DATABASE_URL` and `NUXT_KENARI_API_KEY`.
+
+### 3. Apply database migrations
 
 ```bash
 npm run db:migrate
 ```
 
-### 4. Jalankan
+### 4. Start development
 
 ```bash
-npm run dev          # http://localhost:3000
+npm run dev
 ```
 
-Saat pertama dibuka tanpa sesi, aplikasi mengarahkan ke `/welcome` (pilih sign in atau create account). Pada database kosong, plugin seed development otomatis membuat user demo `demo@example.com` / `demo1234` beserta akun, transaksi, budget, dan goal contoh. Matikan dengan `DISABLE_DEMO_SEED=1`.
+Open [http://localhost:3000](http://localhost:3000). Unauthenticated visitors are sent to `/welcome`, where they can sign in or create an account. In development, the seed plugin can create demo data when configured for an empty database.
 
-### 5. Build & jalankan produksi
+## Production
+
+Build and start the Nitro server:
 
 ```bash
-npm run build        # menghasilkan .output/
-npm run start        # node .output/server/index.mjs
+npm run build
+npm run start
 ```
 
----
+The production entry point is `.output/server/index.mjs`.
 
-## Test
+## Database commands
 
 ```bash
-npm run lint         # ESLint
-npm run typecheck    # vue-tsc + tsc untuk skema DB
-npm run build        # WAJIB dulu — test integration menembak .output/server/index.mjs
-npm test             # Vitest: 151 test di 9 file
-npm run test:e2e     # Playwright: 3 skenario browser (register, navigasi, login)
+npm run db:generate  # Generate a migration from schema changes
+npm run db:migrate   # Apply migrations to PostgreSQL
+npm run db:studio    # Open Drizzle Studio
 ```
 
-`npm test` menjalankan server hasil build di port 3100; `test:e2e` di port 3300 (`E2E_PORT` bisa diubah).
+## Quality checks and tests
 
----
-
-## Struktur proyek
-
+```bash
+npm run lint
+npm run typecheck
+npm run build
+npm test
+npm run test:e2e
 ```
-app/          Frontend Nuxt — pages, layouts, components, composables
-server/       API Nitro — api/ (endpoint), services/ (domain logic), utils/, middleware/, plugins/
-db/           Drizzle — client, schema/ (13 tabel), migrations/, seed/
-shared/       Skema & tipe isomorfik (DTO, enum, util uang)
-tests/        Vitest (unit/integration) + e2e/ (Playwright)
-scripts/      backup.cmd/py, restore-test, start-db/stop-db, start-prod, smoke-db
-docs/         Dokumentasi teknis
-public/       Aset statis
-```
+
+The integration suite requires a completed build because it starts `.output/server/index.mjs`. The test setup uses a deterministic local OpenAI-compatible provider double, so AI success and failure paths can be tested without real provider credentials.
+
+## Security notes
+
+Financial OS includes server-side ownership checks, rate limiting, audit logging, origin checks for state-changing requests, safe API error envelopes, soft deletion for transactions, and secure session handling. See [`docs/SECURITY.md`](docs/SECURITY.md) for the full policy and known gaps, including the current absence of CSP and 2FA/WebAuthn.
+
+## Documentation
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/AI.md`](docs/AI.md)
+- [`docs/DATABASE.md`](docs/DATABASE.md)
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+- [`docs/BACKUP.md`](docs/BACKUP.md)
+- [`docs/SECURITY.md`](docs/SECURITY.md)
+
+## License
+
+No license has been declared yet. Until a license is added, all rights are reserved by the repository owner.
