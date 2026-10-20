@@ -1,6 +1,6 @@
 # Financial OS
 
-**Self-hosted personal financial intelligence application** — catat pemasukan & pengeluaran, kelola akun, atur budget dan target, proyeksikan cashflow, dan tanya AI soal keuanganmu. Semuanya jalan di mesin sendiri, tanpa layanan berbayar wajib.
+**Self-hosted personal financial intelligence application** — catat pemasukan & pengeluaran, kelola akun, atur budget dan target, proyeksikan cashflow, dan tanya AI soal keuanganmu.
 
 > **Status:** Fungsional penuh (Phase 1–21). Auth, database, seluruh modul keuangan, AI layer opsional, backup/restore, dan test suite sudah jalan.
 
