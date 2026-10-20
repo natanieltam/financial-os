@@ -23,7 +23,7 @@ npm run build
 npm run start        # nuxt start (production server dari .output)
 ```
 
-`npm run dev` HANYA untuk development — jangan pernah dipakai di produksi (PRD §65).
+`npm run dev` HANYA untuk development — jangan pernah dipakai di produksi.
 
 ## Migrasi database
 
@@ -32,7 +32,7 @@ npm run db:generate  # saat skema berubah (hasilnya commit ke Git)
 npm run db:migrate   # jalankan migrasi terhadap DATABASE_URL
 ```
 
-Sebelum migrasi produksi (PRD §96): jalankan `scripts/backup.cmd`, cek isi migrasi, migrasi Drizzle bersifat transaksional per file.
+Sebelum migrasi produksi: jalankan `scripts/backup.cmd`, cek isi migrasi, migrasi Drizzle bersifat transaksional per file.
 
 ## Startup otomatis & resilience (PRD §64)
 
@@ -47,7 +47,7 @@ schtasks /Create /TN "FinancialOS-Server" /TR "C:\path\to\repo\scripts\start-pro
 - Restart-on-failure: `schtasks /Change /TN "FinancialOS-Server" /RI 5 /DU 1440` (retry tiap 5 menit) atau set recovery di Properties task.
 - PostgreSQL (portable): `scripts/start-db.cmd` bisa ditambahkan ke Startup folder. Pastikan disk cukup & laptop tidak sleep: `powercfg /change standby-timeout-ac 0`.
 
-## Tailscale (PRD §66)
+## Tailscale
 
 1. Install Tailscale (gratis untuk personal use — bukan layanan berbayar wajib) di laptop + HP.
 2. `tailscale up` di laptop; catat IP 100.x.y.z.
