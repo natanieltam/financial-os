@@ -19,7 +19,7 @@ real Windows path).
 
 - Drizzle ORM (schema in `db/schema/`, client in `db/client.ts`).
 - All money columns are `NUMERIC(20,2)` — the driver returns strings; JS floats are
-  never used for financial math (PRD §17).
+  never used for financial math.
 
 ## Migration workflow (safe, forward-only)
 
@@ -34,7 +34,7 @@ Rules:
 - Never edit an already-applied migration; generate a new one.
 - Never drop tables/columns containing user data without explicit approval.
 - Migrations run against the app user; production data is never touched by tooling
-  without a reviewed backup/restore plan (PRD §64).
+  without a reviewed backup/restore plan.
 
 ## Tables (Phase 2)
 
