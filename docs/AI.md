@@ -1,7 +1,3 @@
-# AI Layer
-
-PRD §39–§42, §50, §56. AI adalah lapisan asisten — bukan sumber kebenaran.
-
 ## Alur
 
 ```
