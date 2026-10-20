@@ -40,7 +40,7 @@ Kebijakan keamanan Financial OS. PRD §12–§18, §59–§61, §91, §102.
 ## Database security
 
 - PostgreSQL listen hanya localhost (default `listen_addresses = 'localhost'`); pg_hba hanya menerima 127.0.0.1/::1 + local md5.
-- Tidak pernah diekspos publik / lewat Tailscale (PRD §66: hanya aplikasi yang di-expose).
+- Tidak pernah diekspos publik / lewat Tailscale.
 - Constraints: FK dengan ON DELETE behavior, unique (email, idempotency key), check amount > 0, soft delete `deleted_at` untuk transaksi.
 - 18 index untuk query ownership + pencarian.
 
@@ -56,13 +56,13 @@ Kebijakan keamanan Financial OS. PRD §12–§18, §59–§61, §91, §102.
 | transaction create/update/delete | 120/IP/menit |
 | recurring process | 10/IP/menit |
 
-## Audit logging (PRD §59)
+## Audit logging
 
 Tercatat per user + IP, tanpa secret/body mentah: login, logout, failed_login, password_change, account_created/updated/archived (user & bank account), category_*, transaction_created/updated/deleted, transfer_created, budget_*, goal_*, recurring_*, bill_*.
 
 ## Error handling
 
-- Semua error dikemas envelope `{ success:false, error:{ code, message } }` — stack trace, SQL, path, credential tidak pernah sampai ke client (PRD §15).
+- Semua error dikemas envelope `{ success:false, error:{ code, message } }` — stack trace, SQL, path, credential tidak pernah sampai ke client.
 - Pesan error ditulis manual, bukan copy exception internal.
 
 ## Secret handling
